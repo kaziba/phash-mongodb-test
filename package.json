@@ -1,0 +1,20 @@
+{
+  "name": "phash-image-test",
+  "version": "1.0.0",
+  "description": "phash-image test",
+  "main": "build/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "npm i && npm run compile",
+    "start": "node build/index",
+    "compile": "coffee -o build/ src/",
+    "dev": "coffee -o build/ -w src/"
+  },
+  "keywords": [],
+  "author": "eiurur",
+  "license": "MIT",
+  "dependencies": {
+    "hamming-distance": "^1.0.0",
+    "phash-image": "^3.3.0"
+  }
+}
