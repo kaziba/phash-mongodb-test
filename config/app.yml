@@ -1,0 +1,8 @@
+default:
+  PORT: 9999
+  MONGODB_URI: "mongodb://127.0.0.1/phash_test"
+  # MONGODB_URI: "mongodb://192.168.33.10/phash_test"
+
+production: &production
+  port: #{process.env.PORT}
+  MONGODB_URI: "mongodb://127.0.0.1/phash_test"
