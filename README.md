@@ -1,4 +1,4 @@
-primer-phash-mongodb
+phash-mongodb-test
 ======
 
 # Usage
