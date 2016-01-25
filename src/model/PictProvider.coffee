@@ -15,33 +15,9 @@ PictSchema = new Schema
     type: Date
     default: Date.now()
 
-  # type:
-  #   type: String
-  #   enum: ['link', 'image']
-  #   default: 'link'
-  # url: String # https://pixiv.com/mypage.php, https://amam.png
-  # hostName: String  # qiita.com, pixiv.com
-  # title: String # ページのタイトル
-  # siteUrl: String # サイトのURL(画像でも、それを引用してきたサイトのURLがこれ)
-  # siteName: String # サイトのタイトル(名前)
-  # description: String
-  # siteImage: String
-  # isPrivate: # 非公開か
-  #   type: Boolean
-  #   default: true
-  # isArchive:  # アーカイブに収納されたか
-  #   type: Boolean
-  #   default: false
-  # createdAt:
-  #   type: Date
-  #   default: Date.now()
-  # updatedAt:
-  #   type: Date
-  #   default: Date.now()
-
 PictSchema.index {filename: 1, hash: 1}, {unique: true}
 mongoose.model 'Pict', PictSchema
-Pict   = mongoose.model 'Pict'
+Pict = mongoose.model 'Pict'
 
 module.exports = class PictProvider extends DBBaseProvider
 
