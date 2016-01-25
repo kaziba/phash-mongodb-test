@@ -3,61 +3,59 @@ path                 = require 'path'
 chalk                = require 'chalk'
 phash                = require 'phash-image'
 compare              = require 'hamming-distance'
+cliff                = require 'cliff'
 GraphicsMagickClient = require path.resolve 'build', 'lib', 'GraphicsMagickClient'
 Image                = require path.resolve 'build', 'data', 'Image'
 PictProvider         = require path.resolve 'build', 'model', 'PictProvider'
 
-IMAGES_DIR = path.resolve(__dirname, '..', 'images')
+RESIZE_PX  = 16
+# IMAGES_DIR = path.resolve(__dirname, '..', 'images', 'cocoa')
+IMAGES_DIR = path.resolve(__dirname, '..', 'images', 'effected')
 
-
-pictProvider = new PictProvider()
-
-
+pictProvider         = new PictProvider()
+graphicsMagickClient = new GraphicsMagickClient()
 
 ###
 初期処理
 ###
 # 画像を配列に格納
-images = [
-  "#{IMAGES_DIR}/cocoa1.jpg"
-  "#{IMAGES_DIR}/cocoa2.jpg"
-  "#{IMAGES_DIR}/cocoa3.jpg"
-  "#{IMAGES_DIR}/cocoa4.jpg"
-  "#{IMAGES_DIR}/cocoa1_small.jpg"
-]
+images = fs.readdirSync(IMAGES_DIR).filter (file) -> fs.statSync("#{IMAGES_DIR}/#{file}").isFile()
+# images = fs.readdirSync(COCOA_IMAGES_DIR).map (image) -> "#{COCOA_IMAGES_DIR}/#{image}"
 console.log images
 
-
-graphicsMagickClient = new GraphicsMagickClient()
+RESIZE_DIR     = "#{IMAGES_DIR}/resize"
+GRAY_SCALE_DIR = "#{IMAGES_DIR}/grayscale"
+fs.existsSync(RESIZE_DIR) or fs.mkdirSync(RESIZE_DIR)
+fs.existsSync(GRAY_SCALE_DIR) or fs.mkdirSync(GRAY_SCALE_DIR)
 
 # 画像をリサイズ
 promises = images.map (image) ->
   resizeParams =
-    source: image
-    output: "#{image}_resized.jpg" # とりあえず
-    width: 16
-    height: 16
+    source: "#{IMAGES_DIR}/#{image}"
+    output: "#{RESIZE_DIR}/#{image}"
+    width: RESIZE_PX
+    height: RESIZE_PX
   return graphicsMagickClient.resize resizeParams
 
 Promise.all promises
 .then (resizeResultList) ->
 
-  console.log chalk.inverse resizeResultList
+  # console.log chalk.inverse resizeResultList
 
   # 画像のグレースケール
   promises = images.map (image) ->
     typeParams =
-      source: "#{image}_resized.jpg" # とりあえず
-      output: "#{image}_grayscaled.jpg" # とりあえず
+      source: "#{RESIZE_DIR}/#{image}"
+      output: "#{GRAY_SCALE_DIR}/#{image}"
       type: 'Grayscale'
     return graphicsMagickClient.type typeParams
   Promise.all promises
 
 .then (typeResultList) ->
-  console.log chalk.inverse typeResultList
+  # console.log chalk.inverse typeResultList
 
   # ハッシュの算出
-  promises = images.map (image) -> phash("#{image}_grayscaled.jpg")
+  promises = images.map (image) -> phash("#{GRAY_SCALE_DIR}/#{image}")
   Promise.all promises
 
 .then (hashes) ->
@@ -66,28 +64,27 @@ Promise.all promises
   hashes.forEach (hash, idx) ->
     console.log hash
     params =
-      filename: images[idx]
+      filename: "#{IMAGES_DIR}/#{images[idx]}"
       hash: hash
     pictProvider.upsert params
     .then (result) ->
-      return
       console.log chalk.bgCyan result
 
   # 出力
-  console.log chalk.green "hashes ===========> "
+  console.log chalk.green "\nhashes ===========> "
   console.log hashes
 
-  distance1and1 = compare(hashes[0], hashes[0])
-  distance1and2 = compare(hashes[0], hashes[1])
-  distance1and3 = compare(hashes[0], hashes[2])
-  distance1and4 = compare(hashes[0], hashes[3])
-  distance1and1S = compare(hashes[0], hashes[4])
-
-  console.log distance1and1
-  console.log distance1and2
-  console.log distance1and3
-  console.log distance1and4
-  console.log distance1and1S
+  # hashesを回して、自分以外のhashと比較して出力するコード
+  hashes.forEach (hash, idx) ->
+    rows = [['filename', 'distance']]
+    console.log chalk.bgBlue "\n#{images[idx]} =========>"
+    # console.log chalk.bgCyan "Hash = #{hash}"
+    hashes.forEach (_hash, _idx) ->
+      return if idx is _idx
+      distance = compare(hash, _hash)
+      result = if distance then distance else "#{distance}".inverse
+      rows.push [images[_idx], result]
+    console.log cliff.stringifyRows(rows, ['green', 'green'])
 
 .catch (err) ->
   console.error chalk.red err
